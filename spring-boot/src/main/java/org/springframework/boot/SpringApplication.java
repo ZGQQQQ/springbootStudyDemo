@@ -247,7 +247,15 @@ public class SpringApplication {
 			this.sources.addAll(Arrays.asList(sources));
 		}
 		this.webEnvironment = deduceWebEnvironment();
+		/**--------zgq------
+		 * 1.从spring.factories文件中取出初始化器，只取出类的完全限定名（包名 + 类名）
+		 * 2.再通过反射创建对象
+		 */
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+		/**--------zgq------
+		 * 1.从spring.factories文件中取出监听器，只取出类的完全限定名（包名 + 类名）
+		 * 2.再通过反射创建对象
+		 */
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
@@ -283,12 +291,23 @@ public class SpringApplication {
 	 * @return a running {@link ApplicationContext}
 	 */
 	public ConfigurableApplicationContext run(String... args) {
+		/**-------zgq-------
+		 * 计时器开始计时
+		 */
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
+
+
 		ConfigurableApplicationContext context = null;
 		FailureAnalyzers analyzers = null;
 		configureHeadlessProperty();
+		/**-------zgq-------
+		 *
+		 */
 		SpringApplicationRunListeners listeners = getRunListeners(args);
+		/**-------zgq-------
+		 *
+		 */
 		listeners.starting();
 		try {
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
@@ -300,6 +319,9 @@ public class SpringApplication {
 			refreshContext(context);
 			afterRefresh(context, applicationArguments);
 			listeners.finished(context, null);
+			/**-------zgq-------
+			 * 计时器结束计时
+			 */
 			stopWatch.stop();
 			if (this.logStartupInfo) {
 				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), stopWatch);
@@ -369,6 +391,10 @@ public class SpringApplication {
 	private SpringApplicationRunListeners getRunListeners(String[] args) {
 		Class<?>[] types = new Class<?>[] { SpringApplication.class, String[].class };
 		return new SpringApplicationRunListeners(logger,
+				/**------zgq--------
+				 * 从spring.factories文件中取出SpringApplicationRunListener，只取出类的完全限定名（包名 + 类名）
+				 * SpringApplicationRunListener的作用就是发布事件Event
+				 */
 				getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args));
 	}
 
@@ -380,7 +406,13 @@ public class SpringApplication {
 			Object... args) {
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		// Use names and ensure unique to protect against duplicates
+		/**--------zgq----------
+		 *
+		 */
 		Set<String> names = new LinkedHashSet<String>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
+		/**--------zgq----------
+		 *
+		 */
 		List<T> instances = createSpringFactoriesInstances(type, parameterTypes, classLoader, args, names);
 		AnnotationAwareOrderComparator.sort(instances);
 		return instances;
@@ -395,6 +427,9 @@ public class SpringApplication {
 				Class<?> instanceClass = ClassUtils.forName(name, classLoader);
 				Assert.isAssignable(type, instanceClass);
 				Constructor<?> constructor = instanceClass.getDeclaredConstructor(parameterTypes);
+				/**--------zgq----------
+				 *
+				 */
 				T instance = (T) BeanUtils.instantiateClass(constructor, args);
 				instances.add(instance);
 			}
