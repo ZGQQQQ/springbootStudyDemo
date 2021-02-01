@@ -131,6 +131,9 @@ class BeanDefinitionLoader {
 
 	private int load(Object source) {
 		Assert.notNull(source, "Source must not be null");
+		/**-------zgq------
+		 * 判断source是否是Class，由于各个是将启动类封装为Class，所以这里对进入if
+		 */
 		if (source instanceof Class<?>) {
 			return load((Class<?>) source);
 		}
@@ -155,7 +158,14 @@ class BeanDefinitionLoader {
 				load(loader);
 			}
 		}
+		/**----zgq----
+		 * 参数source是springboot启动类的字节码对象，判断启动类注解的继承关系中是否含有@Component注解
+		 */
 		if (isComponent(source)) {
+			/**------zgq------
+			 * annotatedReader --> AnnotatedBeanDefinitionReader 是BeanDefinitionReader的实现类，作用是读取注解
+			 * 注册启动类
+			 */
 			this.annotatedReader.register(source);
 			return 1;
 		}
@@ -281,6 +291,9 @@ class BeanDefinitionLoader {
 	private boolean isComponent(Class<?> type) {
 		// This has to be a bit of a guess. The only way to be sure that this type is
 		// eligible is to make a bean definition out of it and try to instantiate it.
+		/**
+		 * 判断启动类注解的继承关系里是否有@Component注解，有就返回true
+		 */
 		if (AnnotationUtils.findAnnotation(type, Component.class) != null) {
 			return true;
 		}

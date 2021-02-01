@@ -257,6 +257,9 @@ public class SpringApplication {
 		 * 2.再通过反射创建对象
 		 */
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+		/**------zgq------
+		 * deduceMainApplicationClass()方法的作用：将启动类转为对应的字节码文件对象
+		 */
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
 
@@ -291,6 +294,13 @@ public class SpringApplication {
 	 * @return a running {@link ApplicationContext}
 	 */
 	public ConfigurableApplicationContext run(String... args) {
+		//==================================1.向上下文对象设置一些参数，准备工作=============================
+		/*
+		* 1.设置开始时间
+		* 2.设置上下文对象
+		* 3.设置异常报告
+		* 4.设置环境对象
+		*/
 		/**-------zgq-------
 		 * 计时器开始计时
 		 */
@@ -298,24 +308,54 @@ public class SpringApplication {
 		stopWatch.start();
 
 
+		/**-------zgq-------
+		 * ConfigurableApplicationContext是BeanFactory的实现类
+		 */
 		ConfigurableApplicationContext context = null;
 		FailureAnalyzers analyzers = null;
 		configureHeadlessProperty();
 		/**-------zgq-------
+		 * 创建监听器对象
 		 *
+		 * 注：监听器在收到事件后，会执行一些对应的操作
 		 */
 		SpringApplicationRunListeners listeners = getRunListeners(args);
 		/**-------zgq-------
-		 *
+		 * 向监听器注册事件
 		 */
 		listeners.starting();
 		try {
+			/**-------zgq-------
+			 * 将参数包装成DefaultApplicationArguments对象
+			 */
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+			/**-------zgq-------
+			 * 准备环境
+			 */
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
+			/**-------zgq-------
+			 * 打印banner（就是如：spring的logo）
+			 */
 			Banner printedBanner = printBanner(environment);
+			/**-------zgq-------
+			 * 创建上下文对象，上下文对象可以存放一些参数、属性
+			 */
 			context = createApplicationContext();
 			analyzers = new FailureAnalyzers(context);
+
+			//==========================2.向上下文对象设置一些参数 和 将启动类加入容器==============================
+			/**-------zgq-------
+			 * 做了2件事：
+			 *    1-给上下文对象设置属性值（1.设置环境对象；2.初始化参数；3.发布监听事件；4.设置对象工厂）
+			 *    2-将启动类加入到DefaultListableBeanFactory容器
+			 */
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+
+			//=============================================3.刷新上下文===========================================
+			/**-------zgq-------
+			 * 刷新上下文
+			 * 非常重要：这里会跳到spring的refresh()方法
+			 */
 			refreshContext(context);
 			afterRefresh(context, applicationArguments);
 			listeners.finished(context, null);
@@ -349,9 +389,19 @@ public class SpringApplication {
 
 	private void prepareContext(ConfigurableApplicationContext context, ConfigurableEnvironment environment,
 			SpringApplicationRunListeners listeners, ApplicationArguments applicationArguments, Banner printedBanner) {
+		//============================1.给上下文对象设置属性值(到这一步还没有读取启动类上的注解)==========================
+		/*----------zgq-------
+		* 1.设置环境对象；
+		* 2.初始化参数；
+		* 3.发布监听事件；
+		* 4.设置对象工厂；
+		*/
 		context.setEnvironment(environment);
 		postProcessApplicationContext(context);
 		applyInitializers(context);
+		/**---------zgq-------
+		 * 向监听器发布事件
+		 */
 		listeners.contextPrepared(context);
 		if (this.logStartupInfo) {
 			logStartupInfo(context.getParent() == null);
@@ -359,15 +409,29 @@ public class SpringApplication {
 		}
 
 		// Add boot specific singleton beans
+		/**--------zgq-------
+		 * context.getBeanFactory()：通过上下文对象获得容器（获得DefaultListableBeanFactory）
+		 *
+		 */
 		context.getBeanFactory().registerSingleton("springApplicationArguments", applicationArguments);
 		if (printedBanner != null) {
 			context.getBeanFactory().registerSingleton("springBootBanner", printedBanner);
 		}
 
+		//================================将启动类加入到DefaultListableBeanFactory容器======================================
 		// Load the sources
+		/**
+		 * sources存放的是启动类的一些信息
+		 */
 		Set<Object> sources = getSources();
 		Assert.notEmpty(sources, "Sources must not be empty");
+		/**------zgq------
+		 * 加载启动类，将启动类bean的定义信息注册到容器，加入到DefaultListableBeanFactory容器
+		 */
 		load(context, sources.toArray(new Object[sources.size()]));
+		/**------zgq------
+		 * 发送事件ApplicationPrepareEvent
+		 */
 		listeners.contextLoaded(context);
 	}
 
@@ -392,7 +456,7 @@ public class SpringApplication {
 		Class<?>[] types = new Class<?>[] { SpringApplication.class, String[].class };
 		return new SpringApplicationRunListeners(logger,
 				/**------zgq--------
-				 * 从spring.factories文件中取出SpringApplicationRunListener，只取出类的完全限定名（包名 + 类名）
+				 * 从spring.factories文件中取出SpringApplicationRunListener，只取出类的完全限定名（包名 + 类名），再通过反射创建对象
 				 * SpringApplicationRunListener的作用就是发布事件Event
 				 */
 				getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args));
@@ -624,7 +688,7 @@ public class SpringApplication {
 	}
 
 	/**
-	 * Load beans into the application context.
+	 * Load beans into the application context.（加载bean到上下文对象中）
 	 * @param context the context to load beans into
 	 * @param sources the sources to load
 	 */
