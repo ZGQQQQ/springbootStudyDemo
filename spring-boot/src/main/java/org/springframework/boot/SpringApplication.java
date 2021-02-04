@@ -248,12 +248,12 @@ public class SpringApplication {
 		}
 		this.webEnvironment = deduceWebEnvironment();
 		/**--------zgq------
-		 * 1.从spring.factories文件中取出初始化器，只取出类的完全限定名（包名 + 类名）
+		 * 1.配置初始化，先去类路径下的META-INF中找spring.factories文件的ApplicationContextInitializer下的属性
 		 * 2.再通过反射创建对象
 		 */
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
 		/**--------zgq------
-		 * 1.从spring.factories文件中取出监听器，只取出类的完全限定名（包名 + 类名）
+		 * 1.配置监听器，先去类路径下的META-INF中找spring.factories文件的ApplicationListener下的属性
 		 * 2.再通过反射创建对象
 		 */
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
@@ -307,17 +307,19 @@ public class SpringApplication {
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 
-
 		/**-------zgq-------
 		 * ConfigurableApplicationContext是BeanFactory的实现类
 		 */
 		ConfigurableApplicationContext context = null;
 		FailureAnalyzers analyzers = null;
-		configureHeadlessProperty();
+		configureHeadlessProperty();//设置属性
 		/**-------zgq-------
 		 * 创建监听器对象
+		 *      >从spring.factories文件中取出SpringApplicationRunListener，只取出类的完全限定名（包名 + 类名），再通过反射创建对象
+		 *      >SpringApplicationRunListener的作用就是发布事件Event
 		 *
 		 * 注：监听器在收到事件后，会执行一些对应的操作
+		 *     监听器可以发布事件
 		 */
 		SpringApplicationRunListeners listeners = getRunListeners(args);
 		/**-------zgq-------
@@ -338,7 +340,7 @@ public class SpringApplication {
 			 */
 			Banner printedBanner = printBanner(environment);
 			/**-------zgq-------
-			 * 创建上下文对象，上下文对象可以存放一些参数、属性
+			 * 创建上下文对象（上下文对象可以存放一些参数、属性，其中容器就是上下文对象的一个属性）
 			 */
 			context = createApplicationContext();
 			analyzers = new FailureAnalyzers(context);
@@ -346,17 +348,18 @@ public class SpringApplication {
 			//==========================2.向上下文对象设置一些参数 和 将启动类加入容器==============================
 			/**-------zgq-------
 			 * 做了2件事：
-			 *    1-给上下文对象设置属性值（1.设置环境对象；2.初始化参数；3.发布监听事件；4.设置对象工厂）
-			 *    2-将启动类加入到DefaultListableBeanFactory容器
+			 *    1-给上下文对象设置属性值（1.设置环境对象；2.初始化参数；3.发布监听事件；4.从上下文对象获取容器）
+			 *    2-将启动类的定义信息加入到DefaultListableBeanFactory容器
 			 */
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
 
 			//=============================================3.刷新上下文===========================================
 			/**-------zgq-------
 			 * 刷新上下文
-			 * 非常重要：这里会跳到spring的refresh()方法
+			 *    《非常重要：这里会跳到spring的refresh()方法》
 			 */
 			refreshContext(context);
+
 			afterRefresh(context, applicationArguments);
 			listeners.finished(context, null);
 			/**-------zgq-------
@@ -394,7 +397,7 @@ public class SpringApplication {
 		* 1.设置环境对象；
 		* 2.初始化参数；
 		* 3.发布监听事件；
-		* 4.设置对象工厂；
+		* 4.从上下文对象获取容器；
 		*/
 		context.setEnvironment(environment);
 		postProcessApplicationContext(context);
@@ -411,7 +414,6 @@ public class SpringApplication {
 		// Add boot specific singleton beans
 		/**--------zgq-------
 		 * context.getBeanFactory()：通过上下文对象获得容器（获得DefaultListableBeanFactory）
-		 *
 		 */
 		context.getBeanFactory().registerSingleton("springApplicationArguments", applicationArguments);
 		if (printedBanner != null) {
@@ -427,6 +429,7 @@ public class SpringApplication {
 		Assert.notEmpty(sources, "Sources must not be empty");
 		/**------zgq------
 		 * 加载启动类，将启动类bean的定义信息注册到容器，加入到DefaultListableBeanFactory容器
+		 *    ->会去读取启动类注解的继承关系里的@Component注解
 		 */
 		load(context, sources.toArray(new Object[sources.size()]));
 		/**------zgq------

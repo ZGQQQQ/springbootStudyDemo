@@ -132,6 +132,7 @@ public class EmbeddedWebApplicationContext extends GenericWebApplicationContext 
 	protected void onRefresh() {
 		super.onRefresh();
 		try {
+
 			createEmbeddedServletContainer();
 		}
 		catch (Throwable ex) {
