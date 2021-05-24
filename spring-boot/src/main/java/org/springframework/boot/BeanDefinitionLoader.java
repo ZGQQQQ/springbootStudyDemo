@@ -124,7 +124,7 @@ class BeanDefinitionLoader {
 	public int load() {
 		int count = 0;
 		for (Object source : this.sources) {
-			//ZGQ  调用这里
+			//ZGQ  load()方法的参数source就是springboot的启动类
 			count += load(source);
 		}
 		return count;
@@ -135,22 +135,25 @@ class BeanDefinitionLoader {
 		/**-------zgq------
 		 * 判断source是否是Class，由于各个是将启动类封装为Class，所以这里对进入if
 		 */
-		if (source instanceof Class<?>) {
+		if (source instanceof Class<?>) {//ZGQ 判断source是不是类，是的话就进入if
 			//ZGQ  调这
 			return load((Class<?>) source);
 		}
-		if (source instanceof Resource) {
+		if (source instanceof Resource) {//ZGQ 判断source是不是资源，是的话就进入if
 			return load((Resource) source);
 		}
-		if (source instanceof Package) {
+		if (source instanceof Package) {//ZGQ 判断source是不是包，是的话就进入if
 			return load((Package) source);
 		}
-		if (source instanceof CharSequence) {
+		if (source instanceof CharSequence) {//ZGQ 判断source是不是字符串，是的话就进入if
 			return load((CharSequence) source);
 		}
 		throw new IllegalArgumentException("Invalid source type " + source.getClass());
 	}
 
+	/**---ZGQ---
+	 * @param source 参数source就是springboot的启动类
+	 */
 	private int load(Class<?> source) {
 		if (isGroovyPresent()) {
 			// Any GroovyLoaders added in beans{} DSL can contribute beans here

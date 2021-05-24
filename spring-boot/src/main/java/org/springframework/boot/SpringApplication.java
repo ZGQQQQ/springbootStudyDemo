@@ -181,7 +181,7 @@ public class SpringApplication {
 
 	private final Set<Object> sources = new LinkedHashSet<Object>();
 
-	private Class<?> mainApplicationClass;
+	private Class<?> mainApplicationClass;//ZGQ  springboot启动类对应的字节码文件对象Class
 
 	private Banner.Mode bannerMode = Banner.Mode.CONSOLE;
 
@@ -300,7 +300,7 @@ public class SpringApplication {
 		//==================================1.向上下文对象设置一些参数，准备工作=============================
 		/*
 		* 1.设置开始时间
-		* 2.设置上下文对象
+		* 2.创建上下文对象
 		* 3.设置异常报告
 		* 4.设置环境对象
 		*/
@@ -430,8 +430,8 @@ public class SpringApplication {
 
 		//================================将启动类加入到DefaultListableBeanFactory容器======================================
 		// Load the sources
-		/**
-		 * sources存放的是启动类的一些信息
+		/**---ZGQ---
+		 * sources存放的是启动类的一些信息，sources可以理解为就是springboot的启动类
 		 */
 		Set<Object> sources = getSources();
 		Assert.notEmpty(sources, "Sources must not be empty");
